@@ -139,10 +139,18 @@ class Driver < Msf::Ui::Driver
     self.disable_output = false
 
     # Whether or not command passthru should be allowed
-    self.command_passthru = opts.fetch('AllowCommandPassthru', true)
+    self.command_passthru = (opts['AllowCommandPassthru'] == false) ? false : true
 
     # Whether or not to confirm before exiting
-    self.confirm_exit = opts['ConfirmExit']
+    self.confirm_exit = (opts['ConfirmExit'] == true) ? true : false
+
+    # Disables "dangerous" functionality of the console
+    @defanged = opts['Defanged'] == true
+
+    # If we're defanged, then command passthru should be disabled
+    if @defanged
+      self.command_passthru = false
+    end
 
     # Parse any specified database.yml file
     if framework.db.usable and not opts['SkipDatabaseInit']
@@ -622,6 +630,17 @@ class Driver < Msf::Ui::Driver
   #
   attr_accessor :active_resource
 
+  #
+  # If defanged is true, dangerous functionality, such as exploitation, irb,
+  # and command shell passthru is disabled.  In this case, an exception is
+  # raised.
+  #
+  def defanged?
+    if @defanged
+      raise DefangedException
+    end
+  end
+
   def stop
     framework.events.on_ui_stop()
     super
@@ -640,7 +659,7 @@ protected
   def unknown_command(method, line)
 
     [method, method+".exe"].each do |cmd|
-      if command_passthru && Rex::FileUtils.find_full_path(cmd)
+      if (command_passthru == true and Rex::FileUtils.find_full_path(cmd))
 
         print_status("exec: #{line}")
         print_line('')
@@ -749,6 +768,17 @@ protected
     end
   end
 end
+
+#
+# This exception is used to indicate that functionality is disabled due to
+# defanged being true
+#
+class DefangedException < ::Exception
+  def to_s
+    "This functionality is currently disabled (defanged mode)"
+  end
+end
+
 
 end
 end

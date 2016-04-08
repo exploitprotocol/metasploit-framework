@@ -7,17 +7,24 @@ module Msf
 # Network port option.
 #
 ###
-class OptPort < OptInt
+class OptPort < OptBase
   def type
     return 'port'
   end
 
+  def normalize(value)
+    value.to_i
+  end
+
   def valid?(value)
-    if !required? and value.to_s.empty?
-      super
-    else
-      super && normalize(value) <= 65535 && normalize(value) >= 0
+    return false if empty_required_value?(value)
+
+    if ((value != nil and value.to_s.empty? == false) and
+        ((value.to_s.match(/^\d+$/) == nil or value.to_i < 0 or value.to_i > 65535)))
+      return false
     end
+
+    return super
   end
 end
 

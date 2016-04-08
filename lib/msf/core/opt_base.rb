@@ -76,13 +76,6 @@ module Msf
     end
 
     #
-    # Returns true if this option can be validated on assignment
-    #
-    def validate_on_assignment?
-      true
-    end
-
-    #
     # If it's required and the value is nil or empty, then it's not valid.
     #
     def valid?(value)
