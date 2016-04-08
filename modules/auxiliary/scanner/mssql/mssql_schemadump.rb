@@ -35,7 +35,7 @@ class MetasploitModule < Msf::Auxiliary
 
   def run_host(ip)
 
-    if !mssql_login_datastore
+    if (not mssql_login_datastore)
       print_error("#{rhost}:#{rport} - Invalid SQL Server credentials")
       return
     end

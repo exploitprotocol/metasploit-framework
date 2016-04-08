@@ -106,7 +106,7 @@ SINGLE_BYTE_SLED =
 
     # Did someone specify random NOPs in the environment?
     if (!random and datastore['RandomNops'])
-      random = datastore['RandomNops']
+      random = (datastore['RandomNops'].match(/true|1|y/i) != nil)
     end
 
     # Generate the whole sled...

@@ -28,9 +28,6 @@ class MetasploitModule < Msf::Auxiliary
           [ 'MSB', 'MS09-065' ],
           [ 'OSVDB', '59869']
         ],
-      'Actions'        => [[ 'WebServer' ]],
-      'PassiveActions' => [ 'WebServer' ],
-      'DefaultAction'  => 'WebServer',
       'DisclosureDate' => 'Nov 10 2009'
     ))
     register_options([

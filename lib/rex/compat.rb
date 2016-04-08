@@ -149,6 +149,8 @@ def self.open_browser(url='http://google.com/')
 end
 
 def self.open_webrtc_browser(url='http://google.com/')
+  found_browser = false
+
   case RUBY_PLATFORM
   when /mswin2|mingw|cygwin/
       paths = [
@@ -167,8 +169,9 @@ def self.open_webrtc_browser(url='http://google.com/')
       paths.each do |path|
         if File.exists?(path)
           args = (path =~ /chrome\.exe/) ? "--allow-file-access-from-files" : ""
-          system("\"#{path}\" #{args} \"#{url}\"")
-          return true
+          system("#{path} #{args} #{url}")
+          found_browser = true
+          break
         end
       end
 
@@ -179,25 +182,27 @@ def self.open_webrtc_browser(url='http://google.com/')
         args = (browser_path =~ /Chrome/) ? "--args --allow-file-access-from-files" : ""
 
         system("open #{url} -a \"#{browser_path}\" #{args} &")
-        return true
+        found_browser = true
+        break
       end
     end
   else
     if defined? ENV['PATH']
-      ['google-chrome', 'chrome', 'chromium', 'firefox' , 'firefox', 'opera'].each do |browser|
+      ['firefox', 'google-chrome', 'chrome', 'chromium', 'firefox', 'opera'].each do |browser|
         ENV['PATH'].split(':').each do |path|
           browser_path = "#{path}/#{browser}"
           if File.exists?(browser_path)
             args = (browser_path =~ /Chrome/) ? "--allow-file-access-from-files" : ""
             system("#{browser_path} #{args} #{url} &")
-            return true
+            found_browser = true
+            break
           end
         end
       end
     end
   end
 
-  false
+  found_browser
 end
 
 def self.open_email(addr)

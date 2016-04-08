@@ -78,6 +78,8 @@ class Post
   # Executes an auxiliary module
   #
   def cmd_run(*args)
+    defanged?
+
     opt_str = nil
     jobify  = false
     quiet   = false

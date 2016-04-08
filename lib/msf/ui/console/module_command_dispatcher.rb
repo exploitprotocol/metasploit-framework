@@ -122,6 +122,8 @@ module ModuleCommandDispatcher
   # Checks to see if a target is vulnerable.
   #
   def cmd_check(*args)
+    defanged?
+
     ip_range_arg = args.shift || mod.datastore['RHOSTS'] || framework.datastore['RHOSTS'] || ''
     opt = Msf::OptAddressRange.new('RHOSTS')
 
@@ -174,7 +176,7 @@ module ModuleCommandDispatcher
 
   def check_simple(instance=nil)
     unless instance
-      instance = mod
+      instance = mod 
     end
 
     rhost = instance.datastore['RHOST']

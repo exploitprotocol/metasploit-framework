@@ -84,7 +84,7 @@ module VncInjectOptions
     print_status("Local TCP relay started.")
 
     # If the AUTOVNC flag is set, launch VNC viewer.
-    if datastore['AUTOVNC']
+    if (datastore['AUTOVNC'] == true)
       if (session.autovnc(datastore['ViewOnly']))
         print_status("Launched vncviewer.")
       else

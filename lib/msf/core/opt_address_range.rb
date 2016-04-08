@@ -12,10 +12,6 @@ class OptAddressRange < OptBase
     return 'addressrange'
   end
 
-  def validate_on_assignment?
-    false
-  end
-
   def normalize(value)
     return nil unless value.kind_of?(String)
     if (value =~ /^file:(.*)/)

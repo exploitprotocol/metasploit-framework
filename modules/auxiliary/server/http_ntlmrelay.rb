@@ -310,7 +310,7 @@ class MetasploitModule < Msf::Auxiliary
       else
         print_status("Auth successful, saving server response in database")
       end
-      vprint_status(resp.to_s)
+      vprint_status(resp)
     end
     return [resp, ser_sock]
   end

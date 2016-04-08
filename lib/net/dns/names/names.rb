@@ -46,15 +46,12 @@ module Net # :nodoc:
       end
       
       def pack_name(name)
-        if name.size > 255
-          raise ArgumentError, "Name data cannot exceed 255 chars"
+        if name.size > 63
+          raise ArgumentError, "Label data cannot exceed 63 chars"
         end
         arr = name.split(".")
         str = ""
         arr.each do |elem|
-          if elem.size > 63
-            raise ArgumentError, "Label data cannot exceed 63 chars"
-          end
           str += [elem.size,elem].pack("Ca*")
         end
         str += [0].pack("C")

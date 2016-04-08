@@ -408,7 +408,7 @@ class MetasploitModule < Msf::Auxiliary
         end
         subdirs.shift
       end
-    print_status("#{ip}:#{rport} - Spider #{x} complete.") unless datastore['ShowFiles']
+    print_status("#{ip}:#{rport} - Spider #{x} complete.") unless datastore['ShowFiles'] == true
     end
     unless detailed_tbl.rows.empty?
       if datastore['LogSpider'] == '1'

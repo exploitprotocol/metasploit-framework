@@ -40,7 +40,7 @@ class MetasploitModule < Msf::Post
     n = datastore['ITERATIONS']
     file = datastore['FILE']
 
-    if datastore['ZERO']
+    if datastore['ZERO']==true
       type = 0
       print_status("The file will be overwritten with null bytes")
     end

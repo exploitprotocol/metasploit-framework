@@ -72,6 +72,8 @@ class Auxiliary
   # Executes an auxiliary module
   #
   def cmd_run(*args)
+    defanged?
+
     opt_str = nil
     action  = mod.datastore['ACTION']
     jobify  = false

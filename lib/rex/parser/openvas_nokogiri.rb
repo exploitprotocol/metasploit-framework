@@ -4,7 +4,7 @@ require "rex/parser/nokogiri_doc_mixin"
 module Rex
 module Parser
 
-  # If Nokogiri is available, define OpenVas document class.
+  # If Nokogiri is available, define OpenVAS document class.
   load_nokogiri && class OpenVASDocument < Nokogiri::XML::SAX::Document
 
   include NokogiriDocMixin
@@ -37,10 +37,8 @@ module Parser
         @state[:vuln_name] = @text.strip if @text
       end
     when 'description'
-      if in_tag('result')
-        @state[:has_text] = true
-        @state[:vuln_desc] = @text.strip if @text
-      end
+      @state[:has_text] = true
+      @state[:vuln_desc] = @text.strip if @text
     when 'bid'
       if in_tag('result') && in_tag('nvt')
         @state[:has_text] = true
@@ -64,7 +62,7 @@ module Parser
     when 'subnet'
       @state[:has_text] = true
     when 'result'
-      record_vuln
+      record_vuln if in_tag('results')
     when 'threat'
       @state[:has_text] = true if in_tag('ports') && in_tag('port')
     when 'host'

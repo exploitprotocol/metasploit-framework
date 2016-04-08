@@ -254,9 +254,6 @@ module Msf::DBManager::Import
     elsif (firstline.index("<scanJob>"))
       @import_filedata[:type] = "Retina XML"
       return :retina_xml
-    elsif (firstline.index(/<get_results_response status=['"]200['"] status_text=['"]OK['"]>/))
-      @import_filedata[:type] = "OpenVAS XML"
-      return :openvas_new_xml
     elsif (firstline.index(/<get_reports_response status=['"]200['"] status_text=['"]OK['"]>/))
       @import_filedata[:type] = "OpenVAS XML"
       return :openvas_new_xml
@@ -289,7 +286,7 @@ module Msf::DBManager::Import
           @import_filedata[:type] = "Nmap XML"
           return :nmap_xml
         when "openvas-report"
-          @import_filedata[:type] = "OpenVAS"
+          @import_filedata[:type] = "OpenVAS Report"
           return :openvas_xml
         when "NessusClientData"
           @import_filedata[:type] = "Nessus XML (v1)"
