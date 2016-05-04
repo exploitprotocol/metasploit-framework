@@ -22,7 +22,7 @@ PATH
       openssl-ccm (= 1.2.1)
       packetfu (= 1.1.11)
       patch_finder (>= 1.0.2)
-      pcaprub
+      pcaprub (=0.12.1)
       pg (>= 0.11)
       railties
       rb-readline-r7
@@ -157,9 +157,9 @@ GEM
     openssl-ccm (1.2.1)
     packetfu (1.1.11)
       network_interface (~> 0.0)
-      pcaprub (~> 0.12)
+      pcaprub (= 0.12.1)
     patch_finder (1.0.2)
-    pcaprub (0.12.1)
+    pcaprub (= 0.12.1)
     pg (0.18.4)
     pg_array_parser (0.0.9)
     postgres_ext (3.0.0)
